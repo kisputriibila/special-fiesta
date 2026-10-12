@@ -1,0 +1,55 @@
+name: Run E2B Script
+
+on:
+  workflow_dispatch: # Trigger manual dari tab Actions di GitHub
+
+jobs:
+  run-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # Batas waktu runner 6 jam
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Start Tunnels & Server
+        env:
+          PORT: 8000
+        run: |
+          # 1. Jalankan Pinggy Tunnel (Jalur Utama - Cepat & Anti-Blokir ISP)
+          ssh -p 443 -R0:localhost:8000 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 free@a.pinggy.io > pinggy.log 2>&1 &
+
+          # 2. Download dan Jalankan Cloudflare Tunnel (Jalur Cadangan)
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          ./cloudflared tunnel --url http://localhost:8000 > cf.log 2>&1 &
+
+          # 3. Tunggu koneksi tunnel terbentuk
+          sleep 6
+
+          PINGGY_URL=$(grep -o 'https://[^ ]*pinggy[^ ]*' pinggy.log | head -n 1 || true)
+          CF_URL=$(grep -o 'https://[-a-zA-Z0-9@:%._\+~#=]*\.trycloudflare\.com' cf.log | head -n 1 || true)
+
+          echo "=========================================================="
+          echo "🚀 DASHBOARD BERHASIL DIAKSES KE INTERNET!"
+          echo "🌐 LINK UTAMA (Pinggy - Langsung Buka): $PINGGY_URL"
+          echo "🌐 LINK CADANGAN (Cloudflare): $CF_URL"
+          echo "=========================================================="
+
+          # 4. Kirim kedua link ke Telegram Bot
+          MSG="🚀 E2B Dashboard Aktif!%0A%0A🌐 Link Utama:%0A${PINGGY_URL}%0A%0A🌐 Link Cadangan:%0A${CF_URL}"
+          curl -s -X POST "https://api.telegram.org/bot8962233362:AAG3jtCwQ3On5vDx8vjDRH4ihigWoqIUtLE/sendMessage" \
+            -d "chat_id=8949644128" \
+            -d "text=${MSG}" > /dev/null 2>&1 || true
+
+          # 5. Jalankan server
+          node server.js
