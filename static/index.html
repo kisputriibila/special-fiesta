@@ -1,0 +1,3490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E2B Sandboxes Mining Dashboard — 8 Core / 10 GB</title>
+  <meta name="description" content="Dashboard mining otomatis untuk E2B Cloud Sandboxes dengan template custom 8 vCPU dan 10 GB RAM" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #06080d;
+      --bg2:       #0c1017;
+      --bg3:       #121822;
+      --border:    #1c2638;
+      --border2:   #28354d;
+      --accent:    #00dc82; /* E2B emerald */
+      --accent-glow: rgba(0, 220, 130, 0.15);
+      --cyan:      #06b6d4;
+      --purple:    #8b5cf6;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --text:      #f1f5f9;
+      --text2:     #94a3b8;
+      --text3:     #475569;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(6, 8, 13, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #00dc82, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #06080d;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .logo-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 15.5px;
+      background: linear-gradient(135deg, #ffffff, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .badge-spec {
+      font-size: 11px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .ws-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      color: var(--text2);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .rdp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--text);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 5px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .rdp-badge:hover {
+      border-color: var(--accent);
+      background: rgba(0, 220, 130, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .ws-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      transition: all .3s;
+    }
+
+    .ws-dot.connected {
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .btn-new-token {
+      background: linear-gradient(135deg, var(--accent), #059669);
+      color: #04120b;
+      font-weight: 700;
+      font-size: 12.5px;
+      padding: 7px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .btn-new-token:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--accent-glow);
+      filter: brightness(1.05);
+    }
+
+    /* Main */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* Modern Cluster Overview Banner */
+    .cluster-banner {
+      background: linear-gradient(135deg, rgba(14, 21, 33, 0.85), rgba(8, 12, 19, 0.95));
+      border: 1px solid rgba(0, 220, 130, 0.22);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cluster-banner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100%;
+      background: radial-gradient(circle at top right, rgba(0, 220, 130, 0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .cluster-banner-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .cluster-banner-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cluster-banner-title h2 {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    .cluster-banner-desc {
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .cluster-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cluster-pill {
+      background: rgba(18, 24, 38, 0.85);
+      border: 1px solid var(--border2);
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #94a3b8;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color .2s;
+    }
+
+    .cluster-pill.accent {
+      color: #6ee7b7;
+      border-color: rgba(0, 220, 130, 0.35);
+      background: rgba(0, 220, 130, 0.06);
+    }
+
+    .cluster-pill.amber {
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.06);
+    }
+
+    .cluster-pill.purple {
+      color: #c084fc;
+      border-color: rgba(139, 92, 246, 0.35);
+      background: rgba(139, 92, 246, 0.06);
+    }
+
+    .cluster-pill.cyan {
+      color: #38bdf8;
+      border-color: rgba(6, 182, 212, 0.35);
+      background: rgba(6, 182, 212, 0.06);
+    }
+
+    /* Stats Grid */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0.7;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--accent); }
+    .stat-value.cyan  { color: var(--cyan); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.purple { color: #c084fc; }
+
+    .stat-unit {
+      font-size: 11.5px;
+      color: var(--text3);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Token Cards */
+    .token-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: border-color .25s, box-shadow .25s;
+    }
+
+    .token-card:hover {
+      border-color: var(--border2);
+    }
+
+    .token-card.running {
+      border-color: rgba(0, 220, 130, 0.45);
+      box-shadow: 0 4px 24px rgba(0, 220, 130, 0.06);
+    }
+
+    .token-card.selected {
+      border-color: #3b82f6 !important;
+      background: linear-gradient(180deg, rgba(30, 58, 138, 0.12), var(--bg2));
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.18);
+    }
+
+    .token-card.collapsed {
+      margin-bottom: 12px;
+    }
+
+    .token-card.collapsed .token-header {
+      border-bottom: none;
+    }
+
+    .token-card.collapsed .token-body {
+      display: none;
+    }
+
+    /* Dedicated 2-Row Token Header */
+    .token-header {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      transition: background-color .15s;
+    }
+
+    .token-header:hover {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    /* Row 1: Identity & Action Toolbar */
+    .token-header-main {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .token-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1 1 320px;
+    }
+
+    .token-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, rgba(0, 220, 130, 0.18), rgba(6, 182, 212, 0.18));
+      border: 1px solid rgba(0, 220, 130, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #6ee7b7;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(0, 220, 130, 0.1);
+    }
+
+    .token-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .token-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .token-title-text {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .token-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sub-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+
+    .sub-chip.ready {
+      background: rgba(0, 220, 130, 0.1);
+      color: #34d399;
+      border-color: rgba(0, 220, 130, 0.28);
+    }
+
+    .sub-chip.building {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.35);
+      animation: pulse 1.5s infinite;
+    }
+
+    .sub-chip.proxy {
+      background: rgba(6, 182, 212, 0.1);
+      color: #38bdf8;
+      border-color: rgba(6, 182, 212, 0.28);
+    }
+
+    .sub-chip.no-proxy {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.28);
+    }
+
+    /* Primary Status Pill */
+    .status-pill {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .status-pill.status-running {
+      background: rgba(0, 220, 130, 0.14);
+      color: var(--accent);
+      border: 1px solid rgba(0, 220, 130, 0.38);
+      box-shadow: 0 0 10px rgba(0, 220, 130, 0.1);
+    }
+
+    .status-pill.status-provisioning {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-pill.status-queued {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .status-pill.status-standby {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    .status-pill.status-sus {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+
+    .dot-live {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: dotPulse 1.8s infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+
+    /* Actions on Right */
+    .token-actions {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* Row 2: Full-Width Metrics Strip */
+    .token-metrics-strip {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 20px;
+      background: rgba(9, 13, 20, 0.75);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .metric-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-label {
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric-val {
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .metric-divider {
+      width: 1px;
+      height: 14px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .text-emerald { color: var(--accent) !important; font-weight: 700 !important; }
+    .text-cyan    { color: #38bdf8 !important; font-weight: 700 !important; }
+    .text-amber   { color: #fbbf24 !important; font-weight: 700 !important; }
+    .text-purple  { color: #c084fc !important; font-weight: 700 !important; }
+
+    /* Buttons */
+    .btn {
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .btn-sm {
+      padding: 6px 11px;
+      font-size: 11.5px;
+      border-radius: 7px;
+    }
+
+    .btn-tool {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-tool:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border-color: var(--border2);
+      transform: translateY(-1px);
+    }
+    .btn-tool-danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    .btn-group-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-collapse {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .btn-collapse:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .collapse-chevron {
+      display: inline-block;
+      transition: transform .25s ease;
+      font-size: 10px;
+    }
+
+    .token-card.collapsed .collapse-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .btn-emerald {
+      background: var(--accent);
+      color: #04120b;
+    }
+    .btn-emerald:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    .btn-cyan {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    .btn-cyan:hover { background: rgba(6, 182, 212, 0.25); }
+
+    .btn-amber {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .btn-amber:hover { background: rgba(245, 158, 11, 0.25); }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text2);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+    .btn-red {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-red:hover { background: rgba(239, 68, 68, 0.22); }
+
+    .btn-rose {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+    .btn-rose:hover {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: rgba(244, 63, 94, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-purple {
+      background: rgba(139, 92, 246, 0.18);
+      color: #c084fc;
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+    .btn-purple:hover {
+      background: rgba(139, 92, 246, 0.3);
+      color: #e9d5ff;
+      border-color: rgba(139, 92, 246, 0.6);
+      transform: translateY(-1px);
+    }
+
+    /* Action & Selection Toolbar */
+    .action-toolbar {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar-chk-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      user-select: none;
+    }
+    .toolbar-chk-label input[type="checkbox"],
+    .token-select-box input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+      border-radius: 4px;
+    }
+    .selection-badge {
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .token-card.selected {
+      border-color: #3b82f6 !important;
+      background: linear-gradient(180deg, rgba(30, 58, 138, 0.15), var(--bg2));
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.2);
+    }
+    .token-select-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-right: 4px;
+    }
+
+    /* Sandboxes Grid */
+    .sandboxes-container {
+      padding: 20px;
+    }
+
+    .sandboxes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .sandbox-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color .2s;
+    }
+
+    .sandbox-card.mining {
+      border-color: rgba(0, 220, 130, 0.35);
+      box-shadow: 0 0 10px rgba(0, 220, 130, 0.05);
+    }
+
+    .sandbox-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .slot-num {
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text2);
+    }
+
+    .slot-status-pill {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .slot-status-pill.mining { background: rgba(0, 220, 130, 0.15); color: var(--accent); }
+    .slot-status-pill.starting { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+    .slot-status-pill.dead { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+    .watchdog-tag {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .watchdog-tag.active {
+      background: rgba(0, 220, 130, 0.12);
+      color: #34d399;
+      border-color: rgba(0, 220, 130, 0.3);
+    }
+
+    .watchdog-tag .heal-count {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .sandbox-hr {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .sandbox-speeds {
+      font-size: 11px;
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px dashed var(--border);
+      padding-top: 6px;
+    }
+
+    .sandbox-spec-tag {
+      font-size: 10px;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(6, 182, 212, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+    }
+
+    .sandbox-times {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      margin-top: 2px;
+    }
+
+    .time-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .time-run {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .time-rem {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    @keyframes hrPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 0px var(--accent)); }
+      50% { transform: scale(1.03); filter: drop-shadow(0 0 8px var(--accent)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 0px var(--accent)); }
+    }
+
+    .hr-live-pulse {
+      animation: hrPulse 2s ease-in-out infinite;
+    }
+
+    /* Terminal Console */
+    .console-section {
+      margin-top: 16px;
+      background: #030508;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .console-header {
+      background: var(--bg3);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text2);
+    }
+
+    .console-logs {
+      padding: 12px 16px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      color: #94a3b8;
+    }
+    .log-entry.build { color: #f59e0b; }
+    .log-entry.success { color: #00dc82; }
+    .log-entry.error { color: #ef4444; }
+
+    /* Mode & Duration Badges */
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+    }
+    .mode-badge.watchdog { background: rgba(168, 85, 247, 0.18); color: #c084fc; border-color: rgba(168, 85, 247, 0.45); }
+    .mode-badge.docker { background: rgba(6, 182, 212, 0.18); color: #38bdf8; border-color: rgba(6, 182, 212, 0.45); }
+    .mode-badge.mode_1 { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.4); }
+    .mode-badge.mode_2 { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border-color: rgba(6, 182, 212, 0.4); }
+    .mode-badge.mode_3 { background: rgba(139, 92, 246, 0.15); color: #c084fc; border-color: rgba(139, 92, 246, 0.4); }
+    .mode-badge.mode_4 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); }
+    .mode-badge.mode_5 { background: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.4); }
+    .mode-badge.random { background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2)); color: #e9d5ff; border-color: rgba(168, 85, 247, 0.5); }
+
+    .duration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+    }
+
+    /* Slot Mode Pill */
+    .slot-mode-pill {
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      border: 1px solid transparent;
+    }
+    .slot-mode-pill.watchdog { background: rgba(168, 85, 247, 0.18); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); }
+    .slot-mode-pill.docker { background: rgba(6, 182, 212, 0.18); color: #38bdf8; border-color: rgba(6, 182, 212, 0.4); }
+    .slot-mode-pill.mode_1 { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+    .slot-mode-pill.mode_2 { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border-color: rgba(6, 182, 212, 0.3); }
+    .slot-mode-pill.mode_3 { background: rgba(139, 92, 246, 0.15); color: #c084fc; border-color: rgba(139, 92, 246, 0.3); }
+    .slot-mode-pill.mode_4 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+    .slot-mode-pill.mode_5 { background: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3); }
+    .slot-mode-pill.random { background: rgba(168, 85, 247, 0.15); color: #e9d5ff; border-color: rgba(168, 85, 247, 0.3); }
+
+    /* Quick Chips Group */
+    .quick-chips-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .chip-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .chip-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .chip-btn.active {
+      background: rgba(0, 220, 130, 0.15);
+      color: var(--accent);
+      border-color: rgba(0, 220, 130, 0.4);
+      font-weight: 600;
+    }
+
+    /* Mode Selection Cards */
+    .mode-select-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 6px;
+    }
+    .mode-option-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      cursor: pointer;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .mode-option-card:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .mode-option-card.active {
+      border-color: var(--accent);
+      background: rgba(0, 220, 130, 0.1);
+      box-shadow: 0 0 10px rgba(0, 220, 130, 0.12);
+    }
+    .mode-option-icon {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .mode-option-info {
+      flex: 1;
+    }
+    .mode-option-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .mode-option-desc {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+    .mode-radio-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+    .mode-option-card.active .mode-radio-dot {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .mode-option-card.active .mode-radio-dot::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #000;
+    }
+
+    /* Modal System — Responsive, Scrollable Body & Sticky Footer */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 15, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    @keyframes modalPopIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal {
+      background: #0d131f;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 600px;
+      max-height: min(90vh, 750px);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-header {
+      padding: 16px 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: #0f1626;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-close {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text2);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn-close:hover {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .modal-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: #080c14;
+      flex-shrink: 0;
+      padding: 4px 14px 0 14px;
+      gap: 6px;
+    }
+
+    .modal-tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 10px 10px 0 0;
+      border-bottom: 2px solid transparent;
+      transition: all .18s ease;
+    }
+
+    .modal-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .modal-tab.active {
+      color: #10b981;
+      border-bottom-color: #10b981;
+      background: rgba(16, 185, 129, 0.09);
+    }
+
+    .modal-body {
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      overscroll-behavior: contain;
+    }
+
+    .modal-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.5);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 520px) {
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: .05em;
+    }
+
+    .form-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .form-input:focus { border-color: var(--accent); }
+
+    .bulk-textarea {
+      width: 100%;
+      height: 110px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .bulk-textarea:focus { border-color: var(--accent); }
+
+    .bulk-counter-pill {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: #6ee7b7;
+      background: rgba(0, 220, 130, 0.1);
+      border: 1px solid rgba(0, 220, 130, 0.25);
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .modal-footer {
+      padding: 14px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #090e18;
+      flex-shrink: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    /* ============================================================ */
+    /* CUSTOM BUBBLE MODAL & TOAST DIALOG (NON-BROWSER DIALOG)      */
+    /* ============================================================ */
+    .bubble-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 13, 0.82);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .bubble-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .bubble-box {
+      background: linear-gradient(155deg, #101622 0%, #0b0f19 100%);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: scale(0.92) translateY(14px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .bubble-overlay.active .bubble-box {
+      transform: scale(1) translateY(0);
+    }
+    .bubble-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .bubble-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .bubble-icon.danger  { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.35); }
+    .bubble-icon.warning { background: rgba(245, 158, 11, 0.16); border-color: rgba(245, 158, 11, 0.35); }
+    .bubble-icon.success { background: rgba(0, 220, 130, 0.16); border-color: rgba(0, 220, 130, 0.35); }
+    .bubble-icon.info    { background: rgba(6, 182, 212, 0.16); border-color: rgba(6, 182, 212, 0.35); }
+
+    .bubble-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+    }
+    .bubble-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-top: 6px;
+      white-space: pre-line;
+      word-break: break-word;
+    }
+    .bubble-checkbox-wrap {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .bubble-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .bubble-checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .bubble-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .bubble-actions .btn {
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 9px;
+    }
+
+    /* Toast Container & Bubbles */
+    .bubble-toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 11000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: 440px;
+      width: calc(100% - 48px);
+    }
+    .bubble-toast {
+      background: rgba(18, 24, 34, 0.95);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 12px 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      pointer-events: auto;
+      transform: translateX(40px);
+      opacity: 0;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .bubble-toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .bubble-toast.success { border-color: rgba(0, 220, 130, 0.45); }
+    .bubble-toast.error   { border-color: rgba(239, 68, 68, 0.45); }
+    .bubble-toast.warning { border-color: rgba(245, 158, 11, 0.45); }
+    .bubble-toast.info    { border-color: rgba(6, 182, 212, 0.45); }
+    .bubble-toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .bubble-toast-msg { flex: 1; white-space: pre-line; word-break: break-word; }
+    .bubble-toast-close {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+    }
+    .bubble-toast-close:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-titles">
+        <span class="logo-text">E2B Cluster Miner</span>
+        <span class="badge-spec">8 vCPU • 8 GB RAM / Sandbox</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="rdp-badge" id="rdpBadge" onclick="renameRdpPrompt()" title="Klik untuk ubah Nama RDP ini (Multi-RDP Telegram Tag)">
+        <span>🖥️</span>
+        <span id="rdpNameDisplay">RDP</span>
+        <span style="font-size: 10px; opacity: 0.7;">✏️</span>
+      </div>
+      <div class="ws-badge">
+        <span class="ws-dot" id="wsDot"></span>
+        <span id="wsStatus">Connecting...</span>
+      </div>
+      <button class="btn btn-sm btn-purple" onclick="testTelegramBot()" title="Uji coba pengiriman log notifikasi ke Telegram Bot (@LogsE2BS_Bot)">
+        <span>🤖 Telegram</span>
+      </button>
+      <button class="btn btn-sm btn-emerald" onclick="startAllTokens()" title="Jalankan seluruh token (3 container per batch)">
+        <span>▶ Start All</span>
+      </button>
+      <button class="btn btn-sm btn-amber" onclick="stopAllTokens()" title="Hentikan semua token yang berjalan & batalkan antrian">
+        <span>⏹ Stop All</span>
+      </button>
+      <button class="btn btn-sm btn-cyan" onclick="openBulkModal()" title="Input banyak token E2B sekaligus (bulk)">
+        <span>📑 + Bulk</span>
+      </button>
+      <button class="btn-new-token" onclick="openAddModal('single')">
+        <span>+ Tambah Token</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Modern Cluster Overview Banner -->
+    <div class="cluster-banner">
+      <div class="cluster-banner-head">
+        <div class="cluster-banner-title">
+          <span style="font-size: 20px;">🚀</span>
+          <div>
+            <h2>E2B High-Performance Mining Cluster</h2>
+            <div class="cluster-banner-desc">Auto-Build E2B Custom Template • Native Watchdog Supervisor (Auto-Heal & Auto-Renew 1 Jam Loop) • CPU Configurable (1% - 100%)</div>
+          </div>
+        </div>
+      </div>
+      <div class="cluster-pills-row">
+        <span class="cluster-pill accent">⚡ 8 vCPU / 8 GB RAM</span>
+        <span class="cluster-pill">📦 Max 20 Sandboxes / Token</span>
+        <span class="cluster-pill amber">⏱️ Sesi: 1 Jam (Auto-Renew Loop)</span>
+        <span class="cluster-pill purple">🛡️ Native Watchdog Supervisor</span>
+        <span class="cluster-pill purple" title="Software miner: XMRig (RandomX / rx.unmineable.com:443)">⛏️ Miner: <span id="displayActiveMiner">XMRig (RandomX)</span></span>
+        <span class="cluster-pill cyan" title="Wallet aktif disinkronkan dari config.json">💰 Wallet: <span id="displayActiveWallet">DASH:XcufdyxZtL4JUjALZfTq6pCrxyTt2Hy2Zu.sal909</span></span>
+        <span class="cluster-pill emerald" id="displayProxyStatus" onclick="toggleProxyConfig()" style="cursor: pointer;" title="Status Proxy dari config.json (Klik untuk toggle)">🌐 Proxy: <span id="displayProxyValue">OFF (Direct)</span></span>
+      </div>
+    </div>
+
+    <!-- Global Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Hashrate</div>
+        <div class="stat-value green" id="globalTotalHr">0.0</div>
+        <div class="stat-unit" id="globalTotalHs">0.0 H/s</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Mining Sandboxes</div>
+        <div class="stat-value cyan" id="globalMiningCount">0</div>
+        <div class="stat-unit">Containers Online</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Akun E2B</div>
+        <div class="stat-value amber" id="globalTokenCount">0</div>
+        <div class="stat-unit">Token Terdaftar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Autonomous Watchdog</div>
+        <div class="stat-value purple" id="globalWatchdogCount">0 Online</div>
+        <div class="stat-unit" id="globalHealedCount" style="color: #34d399;">0 Auto-Heals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Allocated Resources</div>
+        <div class="stat-value" id="globalResourceCount">0 vCPU</div>
+        <div class="stat-unit" id="globalRamCount">0 GB RAM</div>
+      </div>
+    </div>
+
+    <!-- Action / Selection Toolbar -->
+    <div class="action-toolbar" id="actionToolbar">
+      <div class="toolbar-left">
+        <label class="toolbar-chk-label" title="Pilih semua token atau batalkan pilihan">
+          <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" />
+          <span>Pilih Semua Token</span>
+        </label>
+        <span class="selection-badge" id="selectedCountBadge" style="display: none;">
+          <span id="selectedCountNum">0</span> Terpilih
+        </span>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-sm btn-red" id="btnDeleteSelected" onclick="deleteSelectedTokens()" style="display: none;" title="Hapus token yang dicentang / dipilih">
+          <span>🗑️ Hapus Terpilih (<span id="btnDeleteSelectedCount">0</span>)</span>
+        </button>
+        <button class="btn btn-sm btn-rose" onclick="deleteInactiveTokens()" title="Hapus seluruh token yang TIDAK berstatus 'Mining Active' (token yang aktif tetap aman & menambang)">
+          <span>🧹 Clear Inactive (Non-Mining)</span>
+        </button>
+        <button class="btn btn-sm btn-red" onclick="deleteAllTokens()" title="Hapus semua token sekaligus tanpa harus satu per satu">
+          <span>🗑️ Hapus Semua</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tokens Section -->
+    <div id="tokensList">
+      <!-- Rendered dynamically -->
+    </div>
+  </main>
+
+  <!-- Add Token Modal (Single & Bulk Support) -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Tambah Akun / Token E2B</div>
+        <button class="btn-close" onclick="closeAddModal()">&times;</button>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tabBtnSingle" onclick="switchModalTab('single')">
+          ➕ Single Token
+        </button>
+        <button class="modal-tab" id="tabBtnBulk" onclick="switchModalTab('bulk')">
+          📑 Bulk Token (Banyak Sekaligus)
+        </button>
+      </div>
+
+      <!-- SINGLE TAB -->
+      <div class="modal-body" id="tabBodySingle">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Nama Akun / Label (Opsional)</label>
+            <input type="text" class="form-input" id="inputName" placeholder="Kosongkan = Token 1, 2, dst." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Sandbox (1 - 20)</label>
+            <input type="number" class="form-input" id="inputTotal" value="20" min="1" max="20" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">E2B API Key (Wajib)</label>
+          <input type="password" class="form-input" id="inputApiKey" placeholder="e2b_..." />
+          <span style="font-size: 11px; color: var(--text3); margin-top: 2px;">Dapatkan API Key di <a href="https://e2b.dev/dashboard" target="_blank" style="color: var(--accent); text-decoration: none;">e2b.dev/dashboard</a></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Software Miner & Algoritma</label>
+          <div class="mode-select-grid" id="singleMinerGrid">
+            <div class="mode-option-card active" data-miner="xmrig" onclick="selectSingleMiner('xmrig')">
+              <div class="mode-option-icon">⚡</div>
+              <div class="mode-option-info">
+                <div class="mode-option-title">XMRig (RandomX)</div>
+                <div class="mode-option-desc">Algoritma RandomX (rx/0) • Pool: rx.unmineable.com:443 (SSL TLS) • Port 8080</div>
+              </div>
+              <div class="mode-radio-dot"></div>
+            </div>
+          </div>
+          <input type="hidden" id="inputMinerType" value="xmrig" />
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label" style="margin-bottom: 0;">Wallet Address Mining</label>
+            <span style="font-size: 11px; color: var(--accent); cursor: pointer;" onclick="resetWalletToConfig()" title="Kembalikan sesuai config.json">↺ Sesuai config.json</span>
+          </div>
+          <input type="text" class="form-input" id="inputWallet" value="DASH:XcufdyxZtL4JUjALZfTq6pCrxyTt2Hy2Zu.sal909" />
+          <span style="font-size: 11px; color: var(--text3); margin-top: 2px;">Otomatis sinkron dengan <code>config.json</code></span>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="form-label" style="margin-bottom: 0;">Pengaturan CPU Mining (1% - 100%)</label>
+            <span style="font-size: 12px; color: #34d399; font-weight: 700;"><span id="singleThreadsCalc">8</span> Threads / Cores</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" class="form-input" id="inputCpuPercent" value="100" min="1" max="100" style="width: 85px; font-weight: 700; font-size: 14px; color: #34d399;" oninput="syncSingleCpuChips(this.value)" />
+            <div class="quick-chips-group" id="singleCpuChips" style="flex: 1;">
+              <button type="button" class="chip-btn active" onclick="setSingleCpu(100)">100%</button>
+              <button type="button" class="chip-btn" onclick="setSingleCpu(99)">99%</button>
+              <button type="button" class="chip-btn" onclick="setSingleCpu(95)">95%</button>
+              <button type="button" class="chip-btn" onclick="setSingleCpu(90)">90%</button>
+              <button type="button" class="chip-btn" onclick="setSingleCpu(80)">80%</button>
+              <button type="button" class="chip-btn" onclick="setSingleCpu(50)">50%</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Mode Eksekusi Miner</label>
+            <select class="form-input" id="inputMode">
+              <option value="watchdog" selected>🛡️ Native Watchdog Supervisor</option>
+              <option value="docker">🐳 Docker Background (Fallback)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Durasi Running Sandbox</label>
+            <input type="number" class="form-input" id="inputHours" value="1" min="1" max="24" oninput="syncSingleChips(this.value)" />
+          </div>
+        </div>
+        <div class="quick-chips-group" id="singleHoursChips" style="margin-top: -6px;">
+          <button type="button" class="chip-btn active" onclick="setSingleHours(1)">1 Jam</button>
+          <button type="button" class="chip-btn" onclick="setSingleHours(2)">2 Jam</button>
+          <button type="button" class="chip-btn" onclick="setSingleHours(5)">5 Jam</button>
+          <button type="button" class="chip-btn" onclick="setSingleHours(10)">10 Jam</button>
+          <button type="button" class="chip-btn" onclick="setSingleHours(24)">24 Jam (Max)</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Proxy URL Token (Opsional)</label>
+          <input type="text" class="form-input" id="inputProxy" placeholder="socks5://user:pass@host:port (Kosong = default/direct)" />
+        </div>
+      </div>
+
+      <!-- BULK TAB -->
+      <div class="modal-body" id="tabBodyBulk" style="display: none;">
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+            <label class="form-label" style="margin-bottom: 0;">Daftar E2B API Key (1 baris per token)</label>
+            <div class="bulk-counter-pill" id="bulkCounterBadge" style="margin-top: 0;">
+              📋 Terdeteksi: 0 Token
+            </div>
+          </div>
+          <textarea class="bulk-textarea" id="inputBulkKeys" placeholder="e2b_e0e3c2d70afef44719cc5634202d5c44b4db68aa&#10;e2b_xxxx...&#10;e2b_yyyy..." oninput="updateBulkCounter()"></textarea>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Target Sandbox per Token (1 - 20)</label>
+            <input type="number" class="form-input" id="inputBulkTotal" value="20" min="1" max="20" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Durasi Running (Jam)</label>
+            <input type="number" class="form-input" id="inputBulkHours" value="1" min="1" max="24" oninput="syncBulkChips(this.value)" />
+          </div>
+        </div>
+        <div class="quick-chips-group" id="bulkHoursChips" style="margin-top: -6px;">
+          <button type="button" class="chip-btn active" onclick="setBulkHours(1)">1 Jam</button>
+          <button type="button" class="chip-btn" onclick="setBulkHours(2)">2 Jam</button>
+          <button type="button" class="chip-btn" onclick="setBulkHours(5)">5 Jam</button>
+          <button type="button" class="chip-btn" onclick="setBulkHours(10)">10 Jam</button>
+          <button type="button" class="chip-btn" onclick="setBulkHours(24)">24 Jam (Max)</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Software Miner & Algoritma</label>
+          <div class="mode-select-grid" id="bulkMinerGrid">
+            <div class="mode-option-card active" data-miner="xmrig" onclick="selectBulkMiner('xmrig')">
+              <div class="mode-option-icon">⚡</div>
+              <div class="mode-option-info">
+                <div class="mode-option-title">XMRig (RandomX)</div>
+                <div class="mode-option-desc">Algoritma RandomX (rx/0) • Pool: rx.unmineable.com:443 (SSL TLS) • Port 8080</div>
+              </div>
+              <div class="mode-radio-dot"></div>
+            </div>
+          </div>
+          <input type="hidden" id="inputBulkMinerType" value="xmrig" />
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label" style="margin-bottom: 0;">Wallet Address Mining</label>
+            <span style="font-size: 11px; color: var(--accent); cursor: pointer;" onclick="resetWalletToConfig()" title="Kembalikan sesuai config.json">↺ Sesuai config.json</span>
+          </div>
+          <input type="text" class="form-input" id="inputBulkWallet" value="DASH:XcufdyxZtL4JUjALZfTq6pCrxyTt2Hy2Zu.sal909" />
+          <span style="font-size: 11px; color: var(--text3); margin-top: 2px;">Otomatis sinkron dengan <code>config.json</code></span>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="form-label" style="margin-bottom: 0;">Limit CPU Mining (1% - 100%)</label>
+            <span style="font-size: 12px; color: #34d399; font-weight: 700;"><span id="bulkThreadsCalc">8</span> Threads / Cores</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" class="form-input" id="inputBulkCpuPercent" value="100" min="1" max="100" style="width: 85px; font-weight: 700; font-size: 14px; color: #34d399;" oninput="syncBulkCpuChips(this.value)" />
+            <div class="quick-chips-group" id="bulkCpuChips" style="flex: 1;">
+              <button type="button" class="chip-btn active" onclick="setBulkCpu(100)">100%</button>
+              <button type="button" class="chip-btn" onclick="setBulkCpu(99)">99%</button>
+              <button type="button" class="chip-btn" onclick="setBulkCpu(95)">95%</button>
+              <button type="button" class="chip-btn" onclick="setBulkCpu(90)">90%</button>
+              <button type="button" class="chip-btn" onclick="setBulkCpu(80)">80%</button>
+              <button type="button" class="chip-btn" onclick="setBulkCpu(50)">50%</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Mode Eksekusi Miner</label>
+            <select class="form-input" id="inputBulkMode">
+              <option value="watchdog" selected>🛡️ Native Watchdog Supervisor</option>
+              <option value="docker">🐳 Docker Background (Fallback)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Proxy URL Batch (Opsional)</label>
+            <input type="text" class="form-input" id="inputBulkProxy" placeholder="socks5://user:pass@host:port" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons (Always Visible Sticky Footer) -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeAddModal()" style="padding: 10px 18px; font-weight: 600; color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+          ✕ Batal
+        </button>
+        <button type="button" class="btn btn-emerald" id="btnModalSubmit" onclick="submitModal()" style="padding: 11px 26px; font-size: 14px; font-weight: 700; border-radius: 10px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <span>🚀 Simpan & Jalankan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Run Settings Modal (Pilih Mode Eksekusi & Durasi Saat Mau Jalanin) -->
+  <div class="modal-overlay" id="runSettingsModal">
+    <div class="modal" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title" id="runModalTitle">⚡ Pilih Mode Eksekusi & Durasi Running</div>
+        <button class="btn-close" onclick="closeRunSettingsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="max-height: 74vh; overflow-y: auto;">
+        <div id="runModalTargetDesc" style="font-size: 13px; color: var(--text2); background: var(--bg3); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+          Target: <strong id="runModalTargetName" style="color: var(--accent);">Token #1</strong>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Software Miner & Algoritma</label>
+          <div class="mode-select-grid" id="runModalMinerGrid">
+            <div class="mode-option-card active" data-miner="xmrig" onclick="selectRunModalMiner('xmrig')">
+              <div class="mode-option-icon">⚡</div>
+              <div class="mode-option-info">
+                <div class="mode-option-title">XMRig (RandomX)</div>
+                <div class="mode-option-desc">Algoritma RandomX (rx/0) • Pool: rx.unmineable.com:443 (SSL TLS) • API Port 8080</div>
+              </div>
+              <div class="mode-radio-dot"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mode Eksekusi Miner</label>
+          <div class="mode-select-grid" id="runModalModeGrid">
+            <div class="mode-option-card active" data-mode="watchdog" onclick="selectRunModalMode('watchdog')">
+              <div class="mode-option-icon">🛡️</div>
+              <div class="mode-option-info">
+                <div class="mode-option-title">Native Watchdog Supervisor</div>
+                <div class="mode-option-desc">Jalan native di sandbox dengan Watchdog Supervisor otomatis (Auto-Restart, Auto-Heal, Telemetry API). Cepat, hemat resource, tanpa Docker!</div>
+              </div>
+              <div class="mode-radio-dot"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pengaturan CPU Mining (1% - 100%)</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" class="form-input" id="runModalCpuPercent" value="100" min="1" max="100" style="width: 100px; font-weight: 700; font-size: 15px; color: #34d399;" oninput="syncRunCpuChips(this.value)" />
+            <span style="font-size: 13px; color: var(--text2); font-weight: 600;">% CPU (<span id="runModalThreadsCalc">8</span> Threads)</span>
+          </div>
+          <div class="quick-chips-group" id="runModalCpuChips">
+            <button type="button" class="chip-btn active" onclick="setRunModalCpu(100)">100% (Max)</button>
+            <button type="button" class="chip-btn" onclick="setRunModalCpu(99)">99%</button>
+            <button type="button" class="chip-btn" onclick="setRunModalCpu(95)">95%</button>
+            <button type="button" class="chip-btn" onclick="setRunModalCpu(90)">90%</button>
+            <button type="button" class="chip-btn" onclick="setRunModalCpu(80)">80%</button>
+            <button type="button" class="chip-btn" onclick="setRunModalCpu(50)">50%</button>
+          </div>
+          <span style="font-size: 11px; color: var(--text3); margin-top: 4px;">⚡ Hashrate otomatis menyesuaikan persentase CPU ini.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Durasi Running Sandbox (Default 1 Jam, Maksimal 24 Jam)</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" class="form-input" id="runModalHours" value="1" min="1" max="24" style="width: 85px; font-weight: 700; font-size: 15px; color: #fbbf24;" oninput="syncRunModalChips(this.value)" />
+            <span style="font-size: 13px; color: var(--text2); font-weight: 600;">Jam (Sesi E2B: 1 Jam & Auto-Renew)</span>
+          </div>
+          <div class="quick-chips-group" id="runModalChips">
+            <button type="button" class="chip-btn active" onclick="setRunModalHours(1)">1 Jam (Default E2B)</button>
+            <button type="button" class="chip-btn" onclick="setRunModalHours(2)">2 Jam</button>
+            <button type="button" class="chip-btn" onclick="setRunModalHours(5)">5 Jam</button>
+            <button type="button" class="chip-btn" onclick="setRunModalHours(10)">10 Jam</button>
+            <button type="button" class="chip-btn" onclick="setRunModalHours(24)">24 Jam (Max)</button>
+          </div>
+          <span style="font-size: 11px; color: var(--text3); margin-top: 4px;">ℹ️ Platform E2B membatasi durasi per container maksimal 1 jam. Jika diset &gt;1 jam, sistem otomatis auto-renew per 1 jam tanpa henti.</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeRunSettingsModal()">Batal</button>
+        <button class="btn btn-emerald" id="btnRunModalConfirm" onclick="confirmRunSettingsModal()">
+          <span>▶ Jalankan Sekarang</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Bubble Dialog Modal (Non-Browser Popup) -->
+  <div class="bubble-overlay" id="bubbleModalOverlay" onclick="if(event.target===this) closeBubbleModal(false)">
+    <div class="bubble-box">
+      <div class="bubble-head">
+        <div class="bubble-icon" id="bubbleIcon">⚠️</div>
+        <div style="flex: 1;">
+          <h3 class="bubble-title" id="bubbleTitle">Konfirmasi Tindakan</h3>
+          <div class="bubble-desc" id="bubbleMessage">Deskripsi...</div>
+        </div>
+      </div>
+      <div id="bubbleCheckboxWrap" class="bubble-checkbox-wrap" style="display: none;">
+        <label class="bubble-checkbox-label">
+          <input type="checkbox" id="bubbleCheckbox" />
+          <span id="bubbleCheckboxText">Opsi tambahan</span>
+        </label>
+      </div>
+      <div class="bubble-actions">
+        <button class="btn btn-ghost" id="bubbleBtnCancel" onclick="closeBubbleModal(false)">Batal</button>
+        <button class="btn btn-red" id="bubbleBtnConfirm" onclick="closeBubbleModal(true)">Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Bubbles -->
+  <div class="bubble-toast-container" id="bubbleToastContainer"></div>
+
+  <script>
+    // ============================================================
+    // CUSTOM BUBBLE MODAL & TOAST SYSTEM (MENGGANTIKAN ALERT/CONFIRM CHROME)
+    // ============================================================
+    let bubbleResolve = null;
+
+    function showBubbleConfirm({
+      title = 'Konfirmasi',
+      message = '',
+      icon = '⚠️',
+      iconType = 'danger',
+      confirmText = 'Lanjutkan',
+      confirmClass = 'btn-red',
+      cancelText = 'Batal',
+      showCheckbox = false,
+      checkboxText = '',
+      checkboxChecked = false
+    }) {
+      return new Promise((resolve) => {
+        bubbleResolve = resolve;
+
+        const overlay = document.getElementById('bubbleModalOverlay');
+        const iconEl = document.getElementById('bubbleIcon');
+        const titleEl = document.getElementById('bubbleTitle');
+        const msgEl = document.getElementById('bubbleMessage');
+        const chkWrap = document.getElementById('bubbleCheckboxWrap');
+        const chkInput = document.getElementById('bubbleCheckbox');
+        const chkText = document.getElementById('bubbleCheckboxText');
+        const btnCancel = document.getElementById('bubbleBtnCancel');
+        const btnConfirm = document.getElementById('bubbleBtnConfirm');
+
+        iconEl.textContent = icon;
+        iconEl.className = 'bubble-icon ' + (iconType || 'danger');
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        if (showCheckbox) {
+          chkWrap.style.display = 'block';
+          chkText.textContent = checkboxText;
+          chkInput.checked = !!checkboxChecked;
+        } else {
+          chkWrap.style.display = 'none';
+          chkInput.checked = false;
+        }
+
+        btnCancel.textContent = cancelText;
+        btnConfirm.textContent = confirmText;
+        btnConfirm.className = 'btn ' + (confirmClass || 'btn-red');
+
+        overlay.classList.add('active');
+      });
+    }
+
+    function closeBubbleModal(confirmed) {
+      const overlay = document.getElementById('bubbleModalOverlay');
+      overlay.classList.remove('active');
+      if (bubbleResolve) {
+        const chkInput = document.getElementById('bubbleCheckbox');
+        const res = confirmed ? { confirmed: true, checkbox: chkInput ? chkInput.checked : false } : false;
+        bubbleResolve(res);
+        bubbleResolve = null;
+      }
+    }
+
+    function showBubbleToast(message, type = 'info', duration = 4000) {
+      const container = document.getElementById('bubbleToastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `bubble-toast ${type}`;
+
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+      };
+
+      toast.innerHTML = `
+        <span class="bubble-toast-icon">${icons[type] || 'ℹ️'}</span>
+        <div class="bubble-toast-msg">${escapeHtml(message)}</div>
+        <button class="bubble-toast-close" onclick="this.parentElement.remove()">&times;</button>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    let tokensData = [];
+    let ws = null;
+
+    // Default: SEMUA kartu token tertutup/nutup (collapsed) saat di-run & saat dimuat.
+    // Hanya token yang secara eksplisit diklik 'Buka' oleh user yang akan tersimpan di expandedTokens.
+    const expandedTokens = new Set(JSON.parse(localStorage.getItem('e2b_expanded_tokens') || '[]'));
+    localStorage.removeItem('e2b_collapsed_tokens'); // Reset cache lama
+
+    function isTokenCollapsed(tokenId) {
+      return !expandedTokens.has(tokenId);
+    }
+    // Kompatibilitas jika dipanggil collapsedTokens.has()
+    const collapsedTokens = { has: (id) => isTokenCollapsed(id) };
+
+    function collapseTokenCard(tokenId) {
+      if (expandedTokens.has(tokenId)) {
+        expandedTokens.delete(tokenId);
+        localStorage.setItem('e2b_expanded_tokens', JSON.stringify([...expandedTokens]));
+      }
+      const card = document.getElementById(`card-${tokenId}`);
+      if (card) {
+        card.classList.add('collapsed');
+        const btnText = card.querySelector('.collapse-text');
+        if (btnText) btnText.textContent = 'Buka';
+      }
+    }
+
+    function collapseAllTokenCards() {
+      expandedTokens.clear();
+      localStorage.setItem('e2b_expanded_tokens', JSON.stringify([]));
+      tokensData.forEach(t => {
+        const card = document.getElementById(`card-${t.id}`);
+        if (card) {
+          card.classList.add('collapsed');
+          const btnText = card.querySelector('.collapse-text');
+          if (btnText) btnText.textContent = 'Buka';
+        }
+      });
+    }
+
+    function toggleTokenCollapse(tokenId) {
+      if (expandedTokens.has(tokenId)) {
+        expandedTokens.delete(tokenId);
+      } else {
+        expandedTokens.add(tokenId);
+      }
+      localStorage.setItem('e2b_expanded_tokens', JSON.stringify([...expandedTokens]));
+
+      const card = document.getElementById(`card-${tokenId}`);
+      if (card) {
+        const isNowCollapsed = !expandedTokens.has(tokenId);
+        card.classList.toggle('collapsed', isNowCollapsed);
+        const btnText = card.querySelector('.collapse-text');
+        if (btnText) btnText.textContent = isNowCollapsed ? 'Buka' : 'Lipat';
+      }
+    }
+
+    const selectedTokens = new Set();
+
+    function toggleTokenSelection(tokenId, checked) {
+      if (checked) {
+        selectedTokens.add(tokenId);
+      } else {
+        selectedTokens.delete(tokenId);
+      }
+      updateSelectionUI();
+      const card = document.getElementById(`card-${tokenId}`);
+      if (card) {
+        card.classList.toggle('selected', checked);
+      }
+    }
+
+    function toggleSelectAll(checked) {
+      if (checked) {
+        tokensData.forEach(t => selectedTokens.add(t.id));
+      } else {
+        selectedTokens.clear();
+      }
+      tokensData.forEach(t => {
+        const chk = document.querySelector(`.token-chk[data-id="${t.id}"]`);
+        if (chk) chk.checked = checked;
+        const card = document.getElementById(`card-${t.id}`);
+        if (card) card.classList.toggle('selected', checked);
+      });
+      updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+      const selectAll = document.getElementById('selectAllCheckbox');
+      const countBadge = document.getElementById('selectedCountBadge');
+      const countNum = document.getElementById('selectedCountNum');
+      const btnDelSelected = document.getElementById('btnDeleteSelected');
+      const btnDelCount = document.getElementById('btnDeleteSelectedCount');
+
+      const total = tokensData.length;
+      const count = selectedTokens.size;
+
+      if (selectAll) {
+        selectAll.checked = total > 0 && count === total;
+        selectAll.indeterminate = count > 0 && count < total;
+      }
+
+      if (countBadge && countNum) {
+        countNum.textContent = count;
+        countBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+      }
+
+      if (btnDelSelected && btnDelCount) {
+        btnDelCount.textContent = count;
+        btnDelSelected.style.display = count > 0 ? 'inline-flex' : 'none';
+      }
+    }
+
+    // Multi-RDP Identification
+    let currentRdpName = 'RDP-1';
+
+    function updateRdpNameDisplay(name) {
+      if (!name) return;
+      currentRdpName = name;
+      const el = document.getElementById('rdpNameDisplay');
+      if (el) el.textContent = name;
+    }
+
+    async function renameRdpPrompt() {
+      const newName = prompt(`Ubah Nama / Label RDP ini untuk Notifikasi Telegram:\n(Misal: RDP-USA-1, RDP-SG-2, VPS-Contabo-1)`, currentRdpName);
+      if (!newName || !newName.trim()) return;
+      const cleanName = newName.trim();
+
+      try {
+        const resp = await fetch('/api/config/rdp-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: cleanName })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          updateRdpNameDisplay(data.rdp_name);
+          showBubbleToast(`Nama RDP berhasil diubah menjadi '${data.rdp_name}'. Seluruh notifikasi Telegram berikutnya akan memakai label ini!`, 'success');
+        } else {
+          showBubbleToast('Gagal mengubah nama RDP: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        showBubbleToast('Error koneksi: ' + e.message, 'error');
+      }
+    }
+
+    // ============================================================
+    // CONFIG.JSON WALLET & MINER MANAGER (SINKRONISASI AKTIF DARI BACKEND)
+    // ============================================================
+    let currentConfigWallet = '';
+    let currentConfigMiner = 'xmrig';
+    let currentRunModalMiner = 'xmrig';
+
+    function selectSingleMiner(m) {
+      const inputEl = document.getElementById('inputMinerType');
+      if (inputEl) inputEl.value = 'xmrig';
+      document.querySelectorAll('#singleMinerGrid .mode-option-card').forEach(card => {
+        card.classList.toggle('active', card.getAttribute('data-miner') === 'xmrig');
+      });
+    }
+
+    function selectBulkMiner(m) {
+      const inputEl = document.getElementById('inputBulkMinerType');
+      if (inputEl) inputEl.value = 'xmrig';
+      document.querySelectorAll('#bulkMinerGrid .mode-option-card').forEach(card => {
+        card.classList.toggle('active', card.getAttribute('data-miner') === 'xmrig');
+      });
+    }
+
+    function selectRunModalMiner(m) {
+      currentRunModalMiner = 'xmrig';
+      document.querySelectorAll('#runModalMinerGrid .mode-option-card').forEach(card => {
+        card.classList.toggle('active', card.getAttribute('data-miner') === 'xmrig');
+      });
+    }
+
+    function updateActiveMiner(miner) {
+      currentConfigMiner = 'xmrig';
+      const dispEl = document.getElementById('displayActiveMiner');
+      if (dispEl) {
+        dispEl.textContent = 'XMRig (RandomX)';
+      }
+      selectSingleMiner('xmrig');
+      selectBulkMiner('xmrig');
+    }
+
+    async function toggleDefaultMinerConfig() {
+      showBubbleToast('⛏️ Software miner: XMRig (RandomX rx/0)', 'info', 3000);
+    }
+
+    function updateActiveWallet(wallet) {
+      if (!wallet) return;
+      const isChanged = currentConfigWallet && currentConfigWallet !== wallet;
+      currentConfigWallet = wallet;
+
+      const dispEl = document.getElementById('displayActiveWallet');
+      if (dispEl) dispEl.textContent = wallet;
+
+      const w1 = document.getElementById('inputWallet');
+      if (w1) w1.value = wallet;
+
+      const w2 = document.getElementById('inputBulkWallet');
+      if (w2) w2.value = wallet;
+
+      if (isChanged) {
+        showBubbleToast(`💰 Wallet mining diperbarui dari config.json: ${wallet}`, 'info', 5000);
+      }
+    }
+
+    function resetWalletToConfig() {
+      if (!currentConfigWallet) return;
+      const w1 = document.getElementById('inputWallet');
+      if (w1) w1.value = currentConfigWallet;
+      const w2 = document.getElementById('inputBulkWallet');
+      if (w2) w2.value = currentConfigWallet;
+      showBubbleToast('Wallet diisi ulang sesuai config.json', 'info');
+    }
+
+    let currentConfigUseProxy = false;
+
+    function updateProxyStatusDisplay(useProxy) {
+      currentConfigUseProxy = !!useProxy;
+      const pill = document.getElementById('displayProxyStatus');
+      const val = document.getElementById('displayProxyValue');
+      if (val) {
+        val.textContent = currentConfigUseProxy ? 'ON (Pool)' : 'OFF (Direct)';
+      }
+      if (pill) {
+        if (currentConfigUseProxy) {
+          pill.style.background = 'rgba(16, 185, 129, 0.15)';
+          pill.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+          pill.style.color = '#34d399';
+          pill.title = 'Proxy AKTIF (use_proxy: true di config.json). Menggunakan pool proxies.txt. Klik untuk ubah.';
+        } else {
+          pill.style.background = 'rgba(56, 189, 248, 0.12)';
+          pill.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+          pill.style.color = '#38bdf8';
+          pill.title = 'Proxy NONAKTIF (use_proxy: false di config.json). Direct connection tanpa proxy. Klik untuk ubah.';
+        }
+      }
+    }
+
+    async function toggleProxyConfig() {
+      const nextVal = !currentConfigUseProxy;
+      try {
+        const res = await fetch('/api/config/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ use_proxy: nextVal })
+        });
+        const d = await res.json();
+        if (d && d.ok) {
+          updateProxyStatusDisplay(d.use_proxy);
+          showBubbleToast(`🌐 Proxy di config.json diubah ke: ${d.use_proxy ? 'AKTIF / TRUE' : 'NONAKTIF / DIRECT (FALSE)'}`, 'success', 4000);
+        }
+      } catch (e) {
+        showBubbleToast(`Gagal ubah status proxy: ${e.message}`, 'error');
+      }
+    }
+
+    // Ambil konfigurasi awal saat halaman dibuka
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.rdp_name) updateRdpNameDisplay(d.rdp_name);
+        if (d && d.wallet) updateActiveWallet(d.wallet);
+        if (d && d.miner) updateActiveMiner(d.miner);
+        if (d && d.use_proxy !== undefined) updateProxyStatusDisplay(d.use_proxy);
+      })
+      .catch(() => {});
+
+    // Connect WebSocket
+    function connectWS() {
+      const loc = window.location;
+      const wsUrl = (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host;
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        document.getElementById('wsDot').classList.add('connected');
+        document.getElementById('wsStatus').textContent = 'Online (Live)';
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'state') {
+            if (data.rdp_name) updateRdpNameDisplay(data.rdp_name);
+            if (data.wallet) updateActiveWallet(data.wallet);
+            if (data.miner) updateActiveMiner(data.miner);
+            if (data.use_proxy !== undefined) updateProxyStatusDisplay(data.use_proxy);
+            tokensData = data.tokens || [];
+            renderTokens();
+            renderGlobalStats();
+            updateAllTimers();
+          } else if (data.type === 'config') {
+            if (data.rdp_name) updateRdpNameDisplay(data.rdp_name);
+            if (data.wallet) updateActiveWallet(data.wallet);
+            if (data.miner) updateActiveMiner(data.miner);
+            if (data.use_proxy !== undefined) updateProxyStatusDisplay(data.use_proxy);
+          } else if (data.type === 'log') {
+            appendLog(data.token_id, data.entry);
+          } else if (data.type === 'token_banned') {
+            const rerunText = typeof data.rerun_count === 'number' && data.rerun_count > 0 
+              ? `(Sudah rerun ${data.rerun_count}x)` 
+              : `(Belum pernah rerun)`;
+            showBubbleToast(`🚫 Token '${data.token_name}' terdeteksi BANNED ${rerunText}!\nAlasan: ${data.reason}\nNotifikasi log telah dikirim ke Telegram Bot.`, 'error', 8000);
+          }
+        } catch (e) {
+          console.error('WS Error:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        document.getElementById('wsDot').classList.remove('connected');
+        document.getElementById('wsStatus').textContent = 'Disconnected';
+        setTimeout(connectWS, 3000);
+      };
+    }
+
+    connectWS();
+
+    function formatDuration(ms) {
+      if (ms < 0) ms = 0;
+      const totalSecs = Math.floor(ms / 1000);
+      const m = Math.floor(totalSecs / 60);
+      const s = totalSecs % 60;
+      if (m >= 60) {
+        const h = Math.floor(m / 60);
+        const remM = m % 60;
+        return `${h}h ${remM}m ${s}s`;
+      }
+      return `${m}m ${s}s`;
+    }
+
+    function updateAllTimers() {
+      const now = Date.now();
+      document.querySelectorAll('.sandbox-times').forEach(el => {
+        const started = el.getAttribute('data-started');
+        const end = el.getAttribute('data-end');
+        const runEl = el.querySelector('.val-run');
+        const remEl = el.querySelector('.val-rem');
+
+        if (started && runEl) {
+          const startMs = new Date(started).getTime();
+          if (!isNaN(startMs)) {
+            const elapsed = Math.max(0, now - startMs);
+            runEl.textContent = formatDuration(elapsed);
+          }
+        }
+
+        if (end && remEl) {
+          const endMs = new Date(end).getTime();
+          if (!isNaN(endMs)) {
+            const remaining = endMs - now;
+            if (remaining > 0) {
+              remEl.textContent = formatDuration(remaining);
+              remEl.style.color = remaining < 5 * 60 * 1000 ? '#ef4444' : '#fbbf24';
+            } else {
+              remEl.textContent = 'Auto-renew...';
+              remEl.style.color = '#ef4444';
+            }
+          }
+        }
+      });
+    }
+
+    setInterval(updateAllTimers, 1000);
+
+    // Fetch data awal saat halaman pertama kali dibuka
+    async function fetchInitialTokens() {
+      try {
+        const res = await fetch('/api/tokens');
+        const data = await res.json();
+        if (data && data.tokens && data.tokens.length) {
+          tokensData = data.tokens;
+          renderTokens();
+          renderGlobalStats();
+          updateAllTimers();
+        }
+      } catch (e) {}
+    }
+    fetchInitialTokens();
+
+    // Fallback sync polling setiap 5 detik jika WS terputus
+    setInterval(async () => {
+      if (!ws || ws.readyState !== 1) {
+        try {
+          const res = await fetch('/api/tokens');
+          const data = await res.json();
+          if (data && data.tokens) {
+            tokensData = data.tokens;
+            renderTokens();
+            renderGlobalStats();
+            updateAllTimers();
+          }
+        } catch (e) {}
+      }
+    }, 5000);
+
+
+    function renderGlobalStats() {
+      let totalHr = 0;
+      let totalMining = 0;
+      let totalSandboxes = 0;
+      let totalWd = 0;
+      let totalHeals = 0;
+
+      tokensData.forEach(t => {
+        totalHr += (t.total_hashrate || 0);
+        totalMining += (t.mining || 0);
+        totalSandboxes += (t.total_sandboxes || 0);
+        Object.values(t.sandboxes || {}).forEach(sb => {
+          if (sb && sb.watchdog === 'active') totalWd++;
+          if (sb && sb.restarts) totalHeals += sb.restarts;
+        });
+      });
+
+      const kH = (totalHr / 1000).toFixed(2);
+      document.getElementById('globalTotalHr').textContent = `${kH} kH/s`;
+      document.getElementById('globalTotalHs').textContent = `${totalHr.toFixed(1)} H/s`;
+      document.getElementById('globalMiningCount').textContent = totalMining;
+      document.getElementById('globalTokenCount').textContent = tokensData.length;
+      document.getElementById('globalResourceCount').textContent = `${totalSandboxes * 8} vCPU`;
+      document.getElementById('globalRamCount').textContent = `${totalSandboxes * 8} GB RAM`;
+      const wdEl = document.getElementById('globalWatchdogCount');
+      if (wdEl) wdEl.textContent = `${totalWd} Online`;
+      const healEl = document.getElementById('globalHealedCount');
+      if (healEl) healEl.textContent = `${totalHeals} Auto-Heals`;
+    }
+
+    function renderTokens() {
+      const container = document.getElementById('tokensList');
+      if (!tokensData.length) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; background: var(--bg2); border: 1px dashed var(--border2); border-radius: 16px;">
+            <div style="font-size: 36px; margin-bottom: 12px;">⚡</div>
+            <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Belum Ada Token E2B</div>
+            <div style="color: var(--text2); font-size: 13px; margin-bottom: 20px;">Tambahkan E2B API Key untuk mulai membuat template 8 Core & 8GB dan menjalankan mining.</div>
+            <button class="btn btn-emerald" onclick="openAddModal()">+ Tambah Token E2B Sekarang</button>
+          </div>
+        `;
+        return;
+      }
+
+      // Bersihkan ID terpilih yang sudah tidak ada
+      const currentIds = new Set(tokensData.map(t => t.id));
+      for (const sid of selectedTokens) {
+        if (!currentIds.has(sid)) selectedTokens.delete(sid);
+      }
+
+      container.innerHTML = tokensData.map(t => {
+        const sandboxes = Object.entries(t.sandboxes || {});
+        const isRunning = t.running;
+        const totalTarget = t.target_sandboxes || 20;
+        const isCollapsed = isTokenCollapsed(t.id);
+        const isSelected = selectedTokens.has(t.id);
+        const cpuPercent = t.cpu_percent || t.config?.cpu_percent || 100;
+        const cpuThreads = typeof cpuPercentToThreadsCalc === 'function' ? cpuPercentToThreadsCalc(cpuPercent) : Math.max(1, Math.round(8 * (cpuPercent / 100)));
+
+        // 1. Template Chip
+        let templateChipHtml = '';
+        if (t.template_status === 'building') {
+          templateChipHtml = `<span class="sub-chip building" title="Membangun Template 8C/8GB di E2B Cloud">🔨 Building Template...</span>`;
+        } else if (t.template_id) {
+          templateChipHtml = `<span class="sub-chip ready" title="Template ID: ${escapeHtml(t.template_id)}">✓ Template 8C/8GB (${escapeHtml(t.template_id.slice(0, 10))}...)</span>`;
+        } else {
+          templateChipHtml = `<span class="sub-chip" style="color: var(--text3);">Template: Standby</span>`;
+        }
+
+        // 2. Primary Status Pill
+        let primaryStatusHtml = '';
+        if (t.run_status === 'provisioning') {
+          primaryStatusHtml = `<span class="status-pill status-provisioning">⚙️ Setting Up (Batch 3)</span>`;
+        } else if (t.run_status === 'queued') {
+          primaryStatusHtml = `<span class="status-pill status-queued">⏳ Antrean #${t.queue_pos}</span>`;
+        } else if (isRunning) {
+          primaryStatusHtml = `<span class="status-pill status-running"><span class="dot-live"></span>Mining Active</span>`;
+        } else {
+          primaryStatusHtml = `<span class="status-pill status-standby">⏸️ Standby</span>`;
+        }
+
+        // 3. Primary Action Buttons
+        let actionBtnHtml = '';
+        if (t.run_status === 'provisioning') {
+          actionBtnHtml = `
+            <button class="btn btn-sm btn-cyan" disabled style="opacity: 0.9;">⚙️ Setting Up...</button>
+            <button class="btn btn-sm btn-amber" onclick="stopToken('${t.id}')">⏹ Stop</button>
+          `;
+        } else if (t.run_status === 'queued') {
+          actionBtnHtml = `
+            <button class="btn btn-sm btn-ghost" disabled style="color: #fbbf24; border-color: rgba(245,158,11,0.4);">⏳ Antrian #${t.queue_pos}</button>
+            <button class="btn btn-sm btn-amber" onclick="stopToken('${t.id}')">⏹ Batal</button>
+          `;
+        } else if (isRunning) {
+          actionBtnHtml = `
+            <button class="btn btn-sm btn-amber" onclick="stopToken('${t.id}')">⏹ Stop</button>
+          `;
+        } else {
+          actionBtnHtml = `
+            <button class="btn btn-sm btn-emerald" onclick="openRunSettingsModal('${t.id}')" title="Pilih durasi jam & mode, lalu jalankan token">▶ Start (${t.hours || 1}h)</button>
+          `;
+        }
+
+        // 4. Proxy chip
+        let proxyChipHtml = '';
+        if (t.use_proxy && t.has_proxy) {
+          const pxLabel = t.proxy_url && t.proxy_url.includes('@') ? t.proxy_url.split('@')[1] : 'Proxy: Active';
+          proxyChipHtml = `<span class="sub-chip proxy" title="Proxy: ${escapeHtml(t.proxy_url || '')}">🌐 ${escapeHtml(pxLabel)}</span>`;
+        } else if (t.use_proxy) {
+          proxyChipHtml = `<span class="sub-chip no-proxy" title="Proxy aktif tapi belum ada proxy terpasang">⚠️ No Proxy</span>`;
+        } else {
+          proxyChipHtml = `<span class="sub-chip direct" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);" title="Direct connection tanpa proxy (use_proxy: false di config.json)">⚡ Direct (No Proxy)</span>`;
+        }
+
+        return `
+          <div class="token-card ${isRunning ? 'running' : ''} ${isCollapsed ? 'collapsed' : ''} ${isSelected ? 'selected' : ''}" id="card-${t.id}">
+            <!-- Header Section (Click to toggle collapse) -->
+            <div class="token-header" onclick="toggleTokenCollapse('${t.id}')" style="cursor: pointer; user-select: none;">
+              <!-- Row 1: Identity & Action Toolbar -->
+              <div class="token-header-main">
+                <div class="token-identity">
+                  <div class="token-select-box" onclick="event.stopPropagation()">
+                    <input type="checkbox" class="token-chk" data-id="${t.id}" ${isSelected ? 'checked' : ''} onchange="toggleTokenSelection('${t.id}', this.checked)" title="Pilih token #${t.order_num || 1}" />
+                  </div>
+                  <div class="token-avatar">#${t.order_num || 1}</div>
+                  <div class="token-heading">
+                    <div class="token-name-row">
+                      <span class="token-title-text">${escapeHtml(t.name)}</span>
+                      ${primaryStatusHtml}
+                      ${t.is_sus ? `<span class="status-pill status-sus" title="Mencurigakan: ${escapeHtml(t.last_sus_reason || '')}">⚠️ SUS</span>` : ''}
+                    </div>
+                    <div class="token-sub-row">
+                      ${t.masked_key ? `<span class="sub-chip" title="E2B API Key: ${escapeHtml(t.raw_name || t.api_key || '')}">🔑 ${escapeHtml(t.masked_key)}</span>` : ''}
+                      ${proxyChipHtml}
+                      ${templateChipHtml}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="token-actions" onclick="event.stopPropagation()">
+                  ${actionBtnHtml}
+                  <button class="btn btn-sm btn-ghost" onclick="openRunSettingsModal('${t.id}')" title="Ubah Pengaturan CPU %, Durasi & Algoritma">⚙️ Config (${t.hours || 1}h)</button>
+                  <button class="btn btn-sm btn-purple" onclick="restartTokenMiner('${t.id}')" title="Restart & Deploy Ulang Miner">🔄 Restart</button>
+                  
+                  <div class="btn-group-tools">
+                    <button class="btn-tool" onclick="simulateTokenAlert('${t.id}')" title="Simulasi Test Notifikasi Telegram">📢</button>
+                    <button class="btn-tool" onclick="buildTemplate('${t.id}')" title="Rebuild Template E2B 8C/8GB">🔨</button>
+                    <button class="btn-tool" onclick="checkToken('${t.id}')" title="Periksa Kesehatan Sandboxes">🔍</button>
+                    <button class="btn-tool btn-tool-danger" onclick="killAllSandboxes('${t.id}')" title="Hapus Semua Sandbox di Akun Ini">🗑️</button>
+                    <button class="btn-tool btn-tool-danger" onclick="deleteToken('${t.id}')" title="Hapus Token dari Dashboard">❌</button>
+                  </div>
+
+                  <button class="btn-collapse" onclick="toggleTokenCollapse('${t.id}')" title="Buka / Lipat Kartu Token">
+                    <span class="collapse-chevron">▼</span>
+                    <span class="collapse-text">${isCollapsed ? 'Buka' : 'Lipat'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Row 2: Full-Width Metrics Strip -->
+              <div class="token-metrics-strip">
+                <div class="metric-pill">
+                  <span class="metric-label">Miner:</span>
+                  <span class="metric-val text-purple">⚡ XMRig (rx/0)</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">CPU:</span>
+                  <span class="metric-val text-emerald">⚡ ${cpuPercent}% (${cpuThreads} Cores)</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">Nodes:</span>
+                  <span class="metric-val ${t.mining > 0 ? 'text-cyan' : ''}">📦 ${t.mining || 0}/${totalTarget} Active</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">Hashrate:</span>
+                  <span class="metric-val text-emerald">${(t.total_hashrate / 1000).toFixed(2)} kH/s</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">Session:</span>
+                  <span class="metric-val text-amber">⏱️ ${t.hours || 1} Jam (Auto-Renew)</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">Rerun:</span>
+                  <span class="metric-val">🔄 ${t.rerun_count || 0}x ${t.runtime_minutes ? `(${t.runtime_minutes}m)` : ''}</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-pill">
+                  <span class="metric-label">Supervisor:</span>
+                  <span class="metric-val text-purple">🛡️ Watchdog</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sandboxes & Console Body (Bisa Buka-Tutup / Kelipet) -->
+            <div class="token-body" id="body-${t.id}">
+              <div class="sandboxes-container">
+                <div class="sandboxes-grid">
+                  ${renderSandboxSlots(t, sandboxes, totalTarget)}
+                </div>
+
+                <!-- Live Console -->
+                <div class="console-section">
+                  <div class="console-header">
+                    <span>LIVE LOG TERMINAL [${escapeHtml(t.name)}]</span>
+                    <span style="color: var(--accent);">Active 8 vCPU / 8 GB</span>
+                  </div>
+                  <div class="console-logs" id="logs-${t.id}">
+                    <div class="log-entry">Memuat log...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Fetch logs for each token
+      tokensData.forEach(t => fetchLogs(t.id));
+      updateSelectionUI();
+    }
+
+    function renderSandboxSlots(t, sandboxes, totalTarget) {
+      const slots = [];
+      const sbMap = new Map(sandboxes.map(([s, data]) => [parseInt(s, 10), data]));
+      const tokenMiner = t.miner_type || t.config?.miner_type || 'xmrig';
+
+      for (let s = 1; s <= totalTarget; s++) {
+        const sb = sbMap.get(s);
+        if (sb && sb.id) {
+          const isMining = sb.status === 'mining';
+          const hr = sb.hashrate_10s || 0;
+          const hrStr = hr > 0 ? `${(hr / 1000).toFixed(2)} kH/s (${hr.toFixed(1)} H/s)` : (isMining ? 'Mining (waiting speed)...' : 'Starting...');
+          const sbCpu = sb.cpu_percent || t.cpu_percent || t.config?.cpu_percent || 100;
+          const sbThreads = sb.threads || cpuPercentToThreadsCalc(sbCpu);
+
+          slots.push(`
+            <div class="sandbox-card ${isMining ? 'mining' : ''}">
+              <div class="sandbox-card-header">
+                <span class="slot-num">SLOT ${String(s).padStart(2, '0')}</span>
+                <span class="slot-mode-pill" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.35);" title="Software Miner">⚡ XMRig</span>
+                <span class="slot-mode-pill watchdog" title="Native Watchdog Supervisor">🛡️ Watchdog</span>
+                ${sb.restarts > 0 ? `<span class="slot-mode-pill" style="background: rgba(245,158,11,0.18); color: #fbbf24; border-color: rgba(245,158,11,0.4);" title="Auto-healed / restarted oleh Watchdog">🩹 ${sb.restarts}x Healed</span>` : ''}
+                <span class="slot-mode-pill" style="background: rgba(0,220,130,0.12); color: #34d399; border-color: rgba(0,220,130,0.3);">⚡ ${sbCpu}% CPU</span>
+                <button class="btn-slot-delete" onclick="killSingleSandbox('${t.id}', '${sb.id}')" title="Hapus container ini" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:auto;padding:2px;">❌</button>
+                <span class="slot-status-pill ${sb.status}">${sb.status}</span>
+              </div>
+              <div class="sandbox-hr ${hr > 0 ? 'hr-live-pulse' : ''}">${hrStr}</div>
+              
+              <div class="sandbox-times" data-started="${sb.started_at || ''}" data-end="${sb.end_at || ''}">
+                <span class="time-badge time-run" title="Waktu container berjalan">⏱️ <span class="val-run">--:--</span></span>
+                <span class="time-badge time-rem" title="Sisa durasi sesi (${sb.hours || t.hours || 10} Jam)">⏳ <span class="val-rem">--:--</span> (${sb.hours || t.hours || 10}h)</span>
+              </div>
+
+              <div class="sandbox-spec-tag">RandomX • 8 vCPU • 8 GB RAM • CPU: ${sbCpu}% (${sbThreads} Cores)</div>
+              <div class="sandbox-speeds">
+                <span>10s: ${hr.toFixed(1)}</span>
+                <span>60s: ${(sb.hashrate_60s || 0).toFixed(1)}</span>
+                <span>15m: ${(sb.hashrate_15m || 0).toFixed(1)}</span>
+              </div>
+              <div style="font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ID: ${sb.id}
+              </div>
+            </div>
+          `);
+        } else {
+          slots.push(`
+            <div class="sandbox-card" style="opacity: 0.45; border-style: dashed;">
+              <div class="sandbox-card-header">
+                <span class="slot-num">SLOT ${String(s).padStart(2, '0')}</span>
+                <span class="slot-status-pill">STANDBY</span>
+              </div>
+              <div class="sandbox-hr" style="color: var(--text3); font-size: 16px;">Waiting...</div>
+              <div class="sandbox-spec-tag" style="background: transparent; color: var(--text3);">8 vCPU • 8 GB</div>
+            </div>
+          `);
+        }
+      }
+      return slots.join('');
+    }
+
+    async function fetchLogs(tokenId) {
+      try {
+        const res = await fetch(`/api/tokens/${tokenId}/logs`);
+        const data = await res.json();
+        const logsEl = document.getElementById(`logs-${tokenId}`);
+        if (logsEl && data.logs) {
+          logsEl.innerHTML = data.logs.map(l => formatLog(l)).join('');
+          logsEl.scrollTop = logsEl.scrollHeight;
+        }
+      } catch (e) {}
+    }
+
+    function appendLog(tokenId, entry) {
+      const logsEl = document.getElementById(`logs-${tokenId}`);
+      if (!logsEl) return;
+      logsEl.innerHTML += formatLog(entry);
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+
+    function formatLog(entry) {
+      const time = new Date(entry.time).toLocaleTimeString('id-ID');
+      const msg = entry.msg || '';
+      let cls = 'log-entry';
+      if (msg.includes('BUILD')) cls += ' build';
+      else if (msg.includes('✓') || msg.includes('🎉') || msg.includes('aktif')) cls += ' success';
+      else if (msg.includes('❌') || msg.includes('error') || msg.includes('gagal')) cls += ' error';
+
+      return `<div class="${cls}">[${time}] ${escapeHtml(msg)}</div>`;
+    }
+
+    function escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text || '';
+      return d.innerHTML;
+    }
+
+    // Modal Actions & Tabs
+    let currentModalTab = 'single';
+
+    function openAddModal(tab = 'single') {
+      document.getElementById('addModal').classList.add('open');
+      if (currentConfigWallet) {
+        const w1 = document.getElementById('inputWallet');
+        if (w1 && !w1.value) w1.value = currentConfigWallet;
+        const w2 = document.getElementById('inputBulkWallet');
+        if (w2 && !w2.value) w2.value = currentConfigWallet;
+      }
+      switchModalTab(tab);
+    }
+
+    function openBulkModal() {
+      openAddModal('bulk');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('open');
+    }
+
+    function switchModalTab(tab) {
+      currentModalTab = tab;
+      const tabBtnSingle = document.getElementById('tabBtnSingle');
+      const tabBtnBulk   = document.getElementById('tabBtnBulk');
+      const tabBodySingle = document.getElementById('tabBodySingle');
+      const tabBodyBulk   = document.getElementById('tabBodyBulk');
+      const modalTitle   = document.getElementById('modalTitle');
+      const btnSubmit    = document.getElementById('btnModalSubmit');
+
+      if (tab === 'bulk') {
+        tabBtnSingle.classList.remove('active');
+        tabBtnBulk.classList.add('active');
+        tabBodySingle.style.display = 'none';
+        tabBodyBulk.style.display = 'flex';
+        modalTitle.textContent = '📑 Tambah Banyak Token E2B (Bulk)';
+        btnSubmit.textContent = '🚀 Simpan & Masukkan Antrian (Bulk 1-by-1)';
+        updateBulkCounter();
+        setTimeout(() => document.getElementById('inputBulkKeys')?.focus(), 50);
+      } else {
+        tabBtnBulk.classList.remove('active');
+        tabBtnSingle.classList.add('active');
+        tabBodyBulk.style.display = 'none';
+        tabBodySingle.style.display = 'flex';
+        modalTitle.textContent = '➕ Tambah Token E2B (Single)';
+        btnSubmit.textContent = 'Simpan & Jalankan';
+        setTimeout(() => document.getElementById('inputApiKey')?.focus(), 50);
+      }
+    }
+
+    function parseBulkKeys(rawText) {
+      if (!rawText) return [];
+      const lines = rawText.split(/[\r\n,;]+/);
+      const cleaned = lines.map(l => l.trim()).filter(l => l.length > 5);
+      return [...new Set(cleaned)];
+    }
+
+    function updateBulkCounter() {
+      const textarea = document.getElementById('inputBulkKeys');
+      const badge = document.getElementById('bulkCounterBadge');
+      if (!textarea || !badge) return;
+
+      const keys = parseBulkKeys(textarea.value);
+      badge.textContent = `📋 Terdeteksi: ${keys.length} token valid (otomatis dinamai Token 1, Token 2, dst. dan antre 1-by-1)`;
+      if (keys.length > 0) {
+        badge.style.color = '#34d399';
+        badge.style.borderColor = 'rgba(0, 220, 130, 0.4)';
+      } else {
+        badge.style.color = '#94a3b8';
+        badge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+      }
+    }
+
+    async function submitModal() {
+      if (currentModalTab === 'bulk') {
+        await submitBulkTokens();
+      } else {
+        await submitAddToken();
+      }
+    }
+
+    // Helper Chip & Hours & CPU Functions
+    function cpuPercentToThreadsCalc(pct) {
+      pct = Math.min(100, Math.max(1, parseInt(pct, 10) || 100));
+      return Math.max(1, Math.round(pct * 8 / 100));
+    }
+
+    function setSingleCpu(p) {
+      p = Math.min(100, Math.max(1, parseInt(p, 10) || 100));
+      const el = document.getElementById('inputCpuPercent');
+      if (el) el.value = p;
+      syncSingleCpuChips(p);
+    }
+    function syncSingleCpuChips(val) {
+      const p = parseInt(val, 10);
+      const tCalc = document.getElementById('singleThreadsCalc');
+      if (tCalc) tCalc.textContent = cpuPercentToThreadsCalc(p);
+      document.querySelectorAll('#singleCpuChips .chip-btn').forEach(btn => {
+        const textP = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textP === p);
+      });
+    }
+
+    function setBulkCpu(p) {
+      p = Math.min(100, Math.max(1, parseInt(p, 10) || 100));
+      const el = document.getElementById('inputBulkCpuPercent');
+      if (el) el.value = p;
+      syncBulkCpuChips(p);
+    }
+    function syncBulkCpuChips(val) {
+      const p = parseInt(val, 10);
+      const tCalc = document.getElementById('bulkThreadsCalc');
+      if (tCalc) tCalc.textContent = cpuPercentToThreadsCalc(p);
+      document.querySelectorAll('#bulkCpuChips .chip-btn').forEach(btn => {
+        const textP = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textP === p);
+      });
+    }
+
+    function setRunModalCpu(p) {
+      p = Math.min(100, Math.max(1, parseInt(p, 10) || 100));
+      const el = document.getElementById('runModalCpuPercent');
+      if (el) el.value = p;
+      syncRunCpuChips(p);
+    }
+    function syncRunCpuChips(val) {
+      const p = parseInt(val, 10);
+      const tCalc = document.getElementById('runModalThreadsCalc');
+      if (tCalc) tCalc.textContent = cpuPercentToThreadsCalc(p);
+      document.querySelectorAll('#runModalCpuChips .chip-btn').forEach(btn => {
+        const textP = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textP === p);
+      });
+    }
+
+    function setSingleHours(h) {
+      h = Math.min(24, Math.max(1, parseInt(h, 10) || 1));
+      const el = document.getElementById('inputHours');
+      if (el) el.value = h;
+      syncSingleChips(h);
+    }
+    function syncSingleChips(val) {
+      const h = parseInt(val, 10);
+      document.querySelectorAll('#singleHoursChips .chip-btn').forEach(btn => {
+        const textH = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textH === h);
+      });
+    }
+
+    function setBulkHours(h) {
+      h = Math.min(24, Math.max(1, parseInt(h, 10) || 1));
+      const el = document.getElementById('inputBulkHours');
+      if (el) el.value = h;
+      syncBulkChips(h);
+    }
+    function syncBulkChips(val) {
+      const h = parseInt(val, 10);
+      document.querySelectorAll('#bulkHoursChips .chip-btn').forEach(btn => {
+        const textH = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textH === h);
+      });
+    }
+
+    // Run Settings Modal State & Helpers
+    let currentRunModalMode = 'watchdog';
+    let runModalTarget = null; // 'all' or tokenId
+
+    function selectRunModalMode(modeKey) {
+      currentRunModalMode = modeKey || 'watchdog';
+      document.querySelectorAll('#runModalModeGrid .mode-option-card').forEach(card => {
+        card.classList.toggle('active', card.getAttribute('data-mode') === currentRunModalMode);
+      });
+    }
+
+    function setRunModalHours(h) {
+      h = Math.min(24, Math.max(1, parseInt(h, 10) || 1));
+      const input = document.getElementById('runModalHours');
+      if (input) input.value = h;
+      syncRunModalChips(h);
+    }
+
+    function syncRunModalChips(val) {
+      const h = parseInt(val, 10);
+      document.querySelectorAll('#runModalChips .chip-btn').forEach(btn => {
+        const textH = parseInt(btn.textContent, 10);
+        btn.classList.toggle('active', textH === h);
+      });
+    }
+
+    function openRunSettingsModal(targetId = 'all') {
+      runModalTarget = targetId;
+      const modal = document.getElementById('runSettingsModal');
+      const titleEl = document.getElementById('runModalTitle');
+      const targetNameEl = document.getElementById('runModalTargetName');
+      const btnConfirm = document.getElementById('btnRunModalConfirm');
+
+      let initialMode = 'watchdog';
+      let initialHours = 1;
+      let initialCpu = 100;
+      let initialMiner = currentConfigMiner || 'xmrig';
+
+      if (targetId === 'all') {
+        titleEl.textContent = '🚀 Jalankan Semua Token (Start All)';
+        targetNameEl.textContent = `Semua Token (${tokensData.length} Akun E2B)`;
+        btnConfirm.innerHTML = '<span>▶ Jalankan Semua Token</span>';
+        initialHours = 1;
+        initialMode = 'watchdog';
+        initialMiner = currentConfigMiner || 'xmrig';
+        initialCpu = tokensData.length ? (tokensData[0].cpu_percent || tokensData[0].config?.cpu_percent || 100) : 100;
+      } else {
+        const token = tokensData.find(t => t.id === targetId);
+        const name = token ? token.name : targetId;
+        initialHours = (token && token.hours) ? token.hours : (token && token.config?.hours ? token.config.hours : 1);
+        initialMode = (token && token.exec_mode) ? token.exec_mode : (token && token.config?.exec_mode ? token.config.exec_mode : 'watchdog');
+        initialCpu = (token && (token.cpu_percent || token.config?.cpu_percent)) ? (token.cpu_percent || token.config.cpu_percent) : 100;
+        initialMiner = token?.miner_type || token?.config?.miner_type || currentConfigMiner || 'xmrig';
+        const isRunning = token && token.running;
+
+        titleEl.textContent = isRunning ? `⚙️ Ubah Mode & Setting: ${name}` : `▶ Jalankan Token: ${name}`;
+        targetNameEl.textContent = `${name} (8 vCPU / 8 GB RAM • CPU: ${initialCpu}%)`;
+        btnConfirm.innerHTML = isRunning ? '<span>💾 Simpan & Terapkan</span>' : `<span>▶ Mulai Mining (${initialHours} Jam, CPU: ${initialCpu}%)</span>`;
+      }
+
+      selectRunModalMode(initialMode);
+      selectRunModalMiner(initialMiner);
+      setRunModalHours(initialHours);
+      setRunModalCpu(initialCpu);
+      modal.classList.add('open');
+    }
+
+    function closeRunSettingsModal() {
+      const modal = document.getElementById('runSettingsModal');
+      if (modal) modal.classList.remove('open');
+      runModalTarget = null;
+    }
+
+    async function confirmRunSettingsModal() {
+      const hoursVal = parseInt(document.getElementById('runModalHours').value, 10);
+      const hours = Math.min(24, Math.max(1, hoursVal || 1));
+      const cpuVal = parseInt(document.getElementById('runModalCpuPercent').value, 10);
+      const cpu_percent = Math.min(100, Math.max(1, cpuVal || 100));
+      const exec_mode = currentRunModalMode || 'watchdog';
+      const miner_type = currentRunModalMiner || 'xmrig';
+      const target = runModalTarget;
+
+      closeRunSettingsModal();
+
+      const minerLabel = 'XMRig (RandomX)';
+
+      if (target === 'all') {
+        try {
+          const res = await fetch('/api/tokens/start-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hours, exec_mode, cpu_percent, miner_type })
+          });
+          const data = await res.json();
+          showBubbleToast(`Semua token dimasukkan ke runner paralel (${minerLabel}, Durasi: ${hours} Jam, CPU: ${cpu_percent}%)!`, 'success');
+        } catch (e) {
+          showBubbleToast('Gagal menjalankan semua token: ' + e.message, 'error');
+        }
+      } else if (target) {
+        const token = tokensData.find(t => t.id === target);
+        const isRunning = token && token.running;
+
+        try {
+          if (isRunning) {
+            const res = await fetch(`/api/tokens/${target}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ hours, exec_mode, cpu_percent, miner_type })
+            });
+            showBubbleToast(`Pengaturan token diperbarui: ${minerLabel}, CPU ${cpu_percent}%, Durasi ${hours} Jam.`, 'success');
+          } else {
+            const res = await fetch(`/api/tokens/${target}/start`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ hours, exec_mode, cpu_percent, miner_type })
+            });
+            const data = await res.json();
+            if (data && data.error) {
+              showBubbleToast(data.error, 'error');
+            } else {
+              showBubbleToast(`Token dimulai (${minerLabel}, Durasi: ${hours} Jam, CPU: ${cpu_percent}%)!`, 'success');
+            }
+          }
+        } catch (e) {
+          showBubbleToast('Gagal memproses token: ' + e.message, 'error');
+        }
+      }
+    }
+
+    async function submitAddToken() {
+      const name = document.getElementById('inputName').value.trim();
+      const apiKey = document.getElementById('inputApiKey').value.trim();
+      const total = parseInt(document.getElementById('inputTotal').value, 10) || 20;
+      const wallet = document.getElementById('inputWallet').value.trim() || currentConfigWallet;
+      const miner_type = document.getElementById('inputMinerType')?.value || currentConfigMiner || 'xmrig';
+      const cpu_percent = Math.min(100, Math.max(1, parseInt(document.getElementById('inputCpuPercent').value, 10) || 100));
+      const exec_mode = document.getElementById('inputMode')?.value || 'watchdog';
+      const proxy_url = (document.getElementById('inputProxy')?.value || '').trim();
+      const hoursVal = parseInt(document.getElementById('inputHours')?.value, 10);
+      const hours = Math.min(24, Math.max(1, hoursVal || 1));
+
+      if (!apiKey) {
+        showBubbleToast('E2B API Key wajib diisi!', 'warning');
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btnModalSubmit');
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Menyimpan...';
+
+      try {
+        const res = await fetch('/api/tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, api_key: apiKey, total, wallet, miner_type, cpu_percent, hours, exec_mode, proxy_url })
+        });
+        const data = await res.json();
+        if (data.error) {
+          showBubbleToast('Error: ' + data.error, 'error');
+        } else {
+          document.getElementById('inputApiKey').value = '';
+          document.getElementById('inputName').value = '';
+          closeAddModal();
+          const minerLabel = 'XMRig (RandomX)';
+          showBubbleToast(`Token berhasil ditambahkan (${minerLabel}, Durasi: ${hours} Jam, CPU: ${cpu_percent}%)!`, 'success');
+        }
+      } catch (e) {
+        showBubbleToast('Gagal menambah token: ' + e.message, 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Simpan & Jalankan';
+      }
+    }
+
+    async function submitBulkTokens() {
+      const textarea = document.getElementById('inputBulkKeys');
+      const rawText = textarea ? textarea.value : '';
+      const keys = parseBulkKeys(rawText);
+      const total = parseInt(document.getElementById('inputBulkTotal').value, 10) || 20;
+      const wallet = document.getElementById('inputBulkWallet').value.trim() || currentConfigWallet;
+      const miner_type = document.getElementById('inputBulkMinerType')?.value || currentConfigMiner || 'xmrig';
+      const cpu_percent = Math.min(100, Math.max(1, parseInt(document.getElementById('inputBulkCpuPercent').value, 10) || 100));
+      const exec_mode = document.getElementById('inputBulkMode')?.value || 'watchdog';
+      const proxy_url = (document.getElementById('inputBulkProxy')?.value || '').trim();
+      const hoursVal = parseInt(document.getElementById('inputBulkHours')?.value, 10);
+      const hours = Math.min(24, Math.max(1, hoursVal || 1));
+
+      if (!keys.length) {
+        showBubbleToast('Silakan tempelkan minimal 1 E2B API Key (1 baris per token)!', 'warning');
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btnModalSubmit');
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = `Memproses ${keys.length} token...`;
+
+      try {
+        const res = await fetch('/api/tokens/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys, total, wallet, miner_type, cpu_percent, hours, exec_mode, proxy_url })
+        });
+        const data = await res.json();
+        if (data.error) {
+          showBubbleToast('Error: ' + data.error, 'error');
+        } else {
+          let msg = `✅ ${data.message || 'Token berhasil ditambahkan!'}`;
+          if (data.added_count > 0) {
+            msg += ` (${data.added_count} token masuk antrian paralel, CPU: ${cpu_percent}%, Durasi: ${hours} Jam).`;
+          }
+          showBubbleToast(msg, 'success');
+          textarea.value = '';
+          updateBulkCounter();
+          closeAddModal();
+        }
+      } catch (e) {
+        showBubbleToast('Gagal menambah token bulk: ' + e.message, 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '🚀 Simpan & Masukkan Antrian (Bulk)';
+      }
+    }
+
+    // API Controls
+    async function startAllTokens() {
+      openRunSettingsModal('all');
+    }
+
+    async function stopAllTokens() {
+      const res = await showBubbleConfirm({
+        title: '⏹ Stop All Runner',
+        message: 'Hentikan semua token yang berjalan & batalkan seluruh antrian?',
+        icon: '⏹️',
+        iconType: 'warning',
+        confirmText: '⏹ Hentikan Semua',
+        confirmClass: 'btn-amber'
+      });
+      if (!res) return;
+      try {
+        await fetch('/api/tokens/stop-all', { method: 'POST' });
+        showBubbleToast('Semua runner dan antrian dihentikan.', 'info');
+      } catch (e) {
+        showBubbleToast('Gagal stop all: ' + e.message, 'error');
+      }
+    }
+
+    async function startToken(id) {
+      openRunSettingsModal(id);
+    }
+
+    async function stopToken(id) {
+      await fetch(`/api/tokens/${id}/stop`, { method: 'POST' });
+      showBubbleToast('Runner token dihentikan.', 'info');
+    }
+
+    async function checkToken(id) {
+      showBubbleToast('Memeriksa status container token...', 'info');
+      await fetch(`/api/tokens/${id}/check`, { method: 'POST' });
+    }
+
+    async function restartTokenMiner(id) {
+      const res = await showBubbleConfirm({
+        title: '🔄 Restart Miner',
+        message: 'Restart miner dan deploy konfigurasi terbaru di semua sandbox aktif token ini?',
+        icon: '🔄',
+        iconType: 'info',
+        confirmText: '🔄 Restart Sekarang',
+        confirmClass: 'btn-purple'
+      });
+      if (!res) return;
+      showBubbleToast('Me-restart miner di semua sandbox...', 'info');
+      await fetch(`/api/tokens/${id}/restart-miner`, { method: 'POST' });
+    }
+
+    async function buildTemplate(id) {
+      const res = await showBubbleConfirm({
+        title: '🔨 Rebuild Template',
+        message: 'Bangun ulang template E2B dengan 8 vCPU & 8 GB RAM?\nProses membutuhkan waktu sekitar 1-2 menit di E2B cloud compiler.',
+        icon: '🔨',
+        iconType: 'info',
+        confirmText: '🔨 Mulai Rebuild',
+        confirmClass: 'btn-cyan'
+      });
+      if (!res) return;
+      await fetch(`/api/tokens/${id}/build-template`, { method: 'POST' });
+      showBubbleToast('Proses build template dimulai di background.', 'info');
+    }
+
+    async function killAllSandboxes(id) {
+      const res = await showBubbleConfirm({
+        title: '🗑️ Terminate All Sandbox',
+        message: 'Yakin ingin menutup/menghapus SEMUA sandbox di akun E2B ini?',
+        icon: '🗑️',
+        iconType: 'danger',
+        confirmText: '🗑️ Terminate All',
+        confirmClass: 'btn-red'
+      });
+      if (!res) return;
+      await fetch(`/api/tokens/${id}/kill-all`, { method: 'POST' });
+      showBubbleToast('Perintah terminate sandbox dikirim.', 'info');
+    }
+
+    async function killInactiveSandboxes(id) {
+      const res = await showBubbleConfirm({
+        title: '🧹 Bersihkan Sandbox Tidak Aktif',
+        message: 'Yakin ingin menghapus sandbox yang TIDAK AKTIF (bukan Mining Active) di akun ini?',
+        icon: '🧹',
+        iconType: 'warning',
+        confirmText: '🧹 Clear Inactive',
+        confirmClass: 'btn-rose'
+      });
+      if (!res) return;
+      await fetch(`/api/tokens/${id}/kill-inactive`, { method: 'POST' });
+      showBubbleToast('Sandbox tidak aktif sedang dibersihkan.', 'info');
+    }
+
+    async function killSingleSandbox(id, sandboxId) {
+      const res = await showBubbleConfirm({
+        title: '❌ Tutup Container',
+        message: `Yakin ingin menutup container sandbox ${sandboxId.slice(0, 16)}...?`,
+        icon: '❌',
+        iconType: 'danger',
+        confirmText: '❌ Tutup Container',
+        confirmClass: 'btn-red'
+      });
+      if (!res) return;
+      await fetch(`/api/tokens/${id}/kill-single/${sandboxId}`, { method: 'POST' });
+      showBubbleToast('Container berhasil ditutup.', 'info');
+    }
+
+    async function deleteToken(id) {
+      const res = await showBubbleConfirm({
+        title: '❌ Hapus Token',
+        message: 'Hapus token ini dari dashboard?\n(Sandbox di cloud tetap aman/tidak otomatis terhapus).',
+        icon: '❌',
+        iconType: 'danger',
+        confirmText: '❌ Hapus Token',
+        confirmClass: 'btn-red'
+      });
+      if (!res) return;
+      await fetch(`/api/tokens/${id}`, { method: 'DELETE' });
+      showBubbleToast('Token dihapus dari dashboard.', 'info');
+    }
+
+    async function deleteAllTokens() {
+      const total = tokensData.length;
+      if (total === 0) {
+        showBubbleToast('Tidak ada token untuk dihapus.', 'warning');
+        return;
+      }
+      const res = await showBubbleConfirm({
+        title: `Hapus SEMUA Token (${total} Token)`,
+        message: `Yakin ingin menghapus SEMUA ${total} token dari dashboard?\n\nSemua antrian runner akan langsung dihentikan.`,
+        icon: '🗑️',
+        iconType: 'danger',
+        confirmText: '🗑️ Hapus Semua',
+        confirmClass: 'btn-red',
+        showCheckbox: true,
+        checkboxText: 'Sekaligus terminate seluruh container sandbox di E2B Cloud',
+        checkboxChecked: true
+      });
+      if (!res || !res.confirmed) return;
+
+      try {
+        const url = `/api/tokens/delete-all${res.checkbox ? '?kill=true' : ''}`;
+        const resp = await fetch(url, { method: 'DELETE' });
+        const data = await resp.json();
+        if (data && data.error) {
+          showBubbleToast('Gagal: ' + data.error, 'error');
+        } else {
+          showBubbleToast(`Semua token (${total}) berhasil dihapus!`, 'success');
+        }
+      } catch (e) {
+        showBubbleToast('Gagal menghapus semua token: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteSelectedTokens() {
+      const count = selectedTokens.size;
+      if (count === 0) {
+        showBubbleToast('Silakan pilih (centang) token yang ingin dihapus terlebih dahulu.', 'warning');
+        return;
+      }
+
+      const res = await showBubbleConfirm({
+        title: `Hapus ${count} Token Terpilih`,
+        message: `Yakin ingin menghapus ${count} token yang dicentang dari dashboard?`,
+        icon: '🗑️',
+        iconType: 'danger',
+        confirmText: `🗑️ Hapus (${count})`,
+        confirmClass: 'btn-red',
+        showCheckbox: true,
+        checkboxText: 'Sekaligus terminate container sandbox di E2B Cloud untuk token terpilih',
+        checkboxChecked: true
+      });
+      if (!res || !res.confirmed) return;
+
+      try {
+        const ids = Array.from(selectedTokens);
+        const resp = await fetch('/api/tokens/delete-selected', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, kill: res.checkbox })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          selectedTokens.clear();
+          updateSelectionUI();
+          showBubbleToast(`${count} token terpilih berhasil dihapus!`, 'success');
+        } else {
+          showBubbleToast('Gagal menghapus token terpilih: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        showBubbleToast('Gagal menghapus token terpilih: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteInactiveTokens() {
+      const inactiveTokens = tokensData.filter(t => !t.running || t.mining === 0);
+      const activeTokens = tokensData.filter(t => t.running && t.mining > 0);
+
+      if (inactiveTokens.length === 0) {
+        showBubbleToast('Semua token saat ini sedang Mining Active! Tidak ada token tidak aktif.', 'info');
+        return;
+      }
+
+      const res = await showBubbleConfirm({
+        title: `🧹 Clear Inactive (${inactiveTokens.length} Token)`,
+        message: `Ditemukan ${inactiveTokens.length} token yang TIDAK berstatus 'Mining Active'.\n\n🛡️ CATATAN: ${activeTokens.length} token yang sedang aktif menambang (Mining Active) AKAN TETAP BERJALAN & AMAN.`,
+        icon: '🧹',
+        iconType: 'warning',
+        confirmText: `🧹 Hapus (${inactiveTokens.length}) Non-Mining`,
+        confirmClass: 'btn-rose',
+        showCheckbox: true,
+        checkboxText: 'Sekaligus bersihkan container sandbox di E2B Cloud untuk token tidak aktif',
+        checkboxChecked: true
+      });
+      if (!res || !res.confirmed) return;
+
+      try {
+        const resp = await fetch('/api/tokens/delete-inactive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kill: res.checkbox })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          inactiveTokens.forEach(t => selectedTokens.delete(t.id));
+          updateSelectionUI();
+          showBubbleToast(`${inactiveTokens.length} token tidak aktif berhasil dihapus. ${activeTokens.length} token aktif tetap menambang!`, 'success');
+        } else {
+          showBubbleToast('Gagal menghapus token tidak aktif: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        showBubbleToast('Gagal menghapus token tidak aktif: ' + e.message, 'error');
+      }
+    }
+
+    async function testTelegramBot() {
+      showBubbleToast('Sedang mengirim notifikasi test ke Telegram Bot (@LogsE2BS_Bot)...', 'info');
+      try {
+        const resp = await fetch('/api/telegram/test', { method: 'POST' });
+        const data = await resp.json();
+        if (data.ok) {
+          showBubbleToast('✅ Berhasil! Notifikasi test terkirim ke Telegram (@LogsE2BS_Bot).', 'success');
+        } else {
+          const adv = data.advice ? `\n\n💡 Petunjuk: ${data.advice}` : '';
+          showBubbleToast(`⚠️ Gagal mengirim ke Telegram:\n${data.error}${adv}`, 'warning', 8000);
+        }
+      } catch (e) {
+        showBubbleToast(`❌ Error koneksi ke server: ${e.message}`, 'error');
+      }
+    }
+
+    async function simulateTokenAlert(tokenId) {
+      const t = tokensData.find(x => x.id === tokenId);
+      const name = t ? t.name : tokenId;
+      const type = prompt(`Pilih tipe log untuk '${name}':\n- Ketik 'rerun' untuk tes Akun Rerun\n- Ketik 'sus' untuk tes Akun Sus\n- Ketik 'banned' untuk tes Akun Banned`, 'sus');
+      if (!type) return;
+      const cleanType = type.trim().toLowerCase();
+      if (!['rerun', 'sus', 'banned'].includes(cleanType)) {
+        showBubbleToast('Pilihan tidak valid. Ketik: rerun, sus, atau banned', 'warning');
+        return;
+      }
+      showBubbleToast(`Mengirim simulasi log ${cleanType.toUpperCase()} ke Telegram...`, 'info');
+      try {
+        const resp = await fetch(`/api/tokens/${tokenId}/test-alert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: cleanType })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          showBubbleToast(`✅ Berhasil! ${data.message}`, 'success');
+        } else {
+          showBubbleToast(`⚠️ Gagal: ${data.error}`, 'error');
+        }
+      } catch (e) {
+        showBubbleToast(`❌ Error: ${e.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
